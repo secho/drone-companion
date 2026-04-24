@@ -13,18 +13,29 @@ SUDOERS_D="${DRONE_SUDOERS_D:-/etc/sudoers.d}"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 log_info "Creating Python venv at $OPT/venv"
+# pip install -e writes drone_ui.egg-info into the source dir, so `drone` must own it
+chown -R drone:drone "$REPO_ROOT/ui"
 sudo -u drone python3 -m venv "$OPT/venv"
 sudo -u drone "$OPT/venv/bin/pip" install --quiet --upgrade pip
 sudo -u drone "$OPT/venv/bin/pip" install --quiet -e "$REPO_ROOT/ui"
 
 log_info "Installing scripts into $OPT/scripts"
-install -o drone -g drone -m 0755 "$REPO_ROOT/scripts/reload-config" "$OPT/scripts/reload-config"
-install -o drone -g drone -m 0755 "$REPO_ROOT/scripts/stream.sh"     "$OPT/scripts/stream.sh"
-install -o root  -g root  -m 0755 "$REPO_ROOT/scripts/drone-update"  /usr/local/bin/drone-update
+# If REPO_ROOT == OPT (normal curl|bash flow), the files already live where they need to be.
+# Just normalize perms/ownership.
+if [ "$(readlink -f "$REPO_ROOT/scripts")" != "$(readlink -f "$OPT/scripts")" ]; then
+    install -o drone -g drone -m 0755 "$REPO_ROOT/scripts/reload-config" "$OPT/scripts/reload-config"
+    install -o drone -g drone -m 0755 "$REPO_ROOT/scripts/stream.sh"     "$OPT/scripts/stream.sh"
+else
+    chown drone:drone "$OPT/scripts/reload-config" "$OPT/scripts/stream.sh"
+    chmod 0755 "$OPT/scripts/reload-config" "$OPT/scripts/stream.sh"
+fi
+install -o root -g root -m 0755 "$REPO_ROOT/scripts/drone-update" /usr/local/bin/drone-update
 
 install -d -o drone -g drone -m 0755 "$OPT/templates"
-cp "$REPO_ROOT"/installer/templates/*.j2 "$OPT/templates/"
-chown drone:drone "$OPT/templates"/*.j2
+if [ "$(readlink -f "$REPO_ROOT/installer/templates")" != "$(readlink -f "$OPT/templates")" ]; then
+    cp "$REPO_ROOT"/installer/templates/*.j2 "$OPT/templates/"
+fi
+chown drone:drone "$OPT/templates"/*.j2 2>/dev/null || true
 
 log_info "Writing sudoers drop-in"
 cat > "$SUDOERS_D/drone-ui" <<'EOF'
