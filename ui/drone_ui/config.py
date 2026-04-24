@@ -1,0 +1,94 @@
+"""Pydantic models and I/O for /etc/drone/config.yaml."""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Literal
+
+import yaml
+from pydantic import BaseModel, Field, field_validator
+
+
+def _config_dir() -> Path:
+    return Path(os.environ.get("DRONE_CONFIG_DIR", "/etc/drone"))
+
+
+class VideoConfig(BaseModel):
+    resolution: Literal["640x480", "1280x720", "1920x1080"] = "640x480"
+    fps: int = Field(20, ge=5, le=60)
+    bitrate: int = Field(600_000, ge=100_000, le=20_000_000)
+    profile: Literal["baseline", "main", "high"] = "baseline"
+    level: str = "4"
+    intra: int = Field(5, ge=1, le=120)
+    fec_percent: int = Field(0, ge=0, le=100)
+    autofocus: Literal["continuous", "manual", "off"] = "continuous"
+    exposure_ev: float = Field(-0.5, ge=-3.0, le=3.0)
+    gcs_host: str = "0.0.0.0"
+    gcs_port: int = Field(5600, ge=1024, le=65535)
+    snapshot_port: int | None = None
+
+
+class MavlinkEndpoint(BaseModel):
+    type: Literal["udp-server", "udp-client", "tcp-server"]
+    address: str = "0.0.0.0"
+    port: int = Field(..., ge=1, le=65535)
+
+
+class MavlinkConfig(BaseModel):
+    uart_device: str = "/dev/serial0"
+    baud: Literal[9600, 57600, 115200, 230400, 460800, 921600] = 115200
+    endpoints: list[MavlinkEndpoint] = Field(
+        default_factory=lambda: [
+            MavlinkEndpoint(type="udp-server", port=14550),
+            MavlinkEndpoint(type="tcp-server", port=5760),
+        ]
+    )
+
+
+class ZerotierConfig(BaseModel):
+    networks: list[str] = Field(default_factory=list)
+
+    @field_validator("networks")
+    @classmethod
+    def _validate_network_ids(cls, v: list[str]) -> list[str]:
+        for nid in v:
+            if len(nid) != 16 or not all(c in "0123456789abcdef" for c in nid.lower()):
+                raise ValueError(f"invalid ZeroTier network id: {nid!r}")
+        return [nid.lower() for nid in v]
+
+
+class LteConfig(BaseModel):
+    enabled: bool = True
+    apn: str | None = None
+    sim_pin: str | None = None
+
+
+class Config(BaseModel):
+    first_run: bool = True
+    hostname: str = "drone"
+    video: VideoConfig = Field(default_factory=VideoConfig)
+    mavlink: MavlinkConfig = Field(default_factory=MavlinkConfig)
+    zerotier: ZerotierConfig = Field(default_factory=ZerotierConfig)
+    lte: LteConfig = Field(default_factory=LteConfig)
+
+
+DEFAULT_CONFIG: dict = Config().model_dump()
+
+
+def load_config() -> Config:
+    path = _config_dir() / "config.yaml"
+    if not path.exists():
+        return Config()
+    with path.open() as f:
+        raw = yaml.safe_load(f) or {}
+    return Config(**raw)
+
+
+def save_config(cfg: Config) -> None:
+    cfg_dir = _config_dir()
+    cfg_dir.mkdir(parents=True, exist_ok=True)
+    path = cfg_dir / "config.yaml"
+    tmp = path.with_suffix(".yaml.tmp")
+    with tmp.open("w") as f:
+        yaml.safe_dump(cfg.model_dump(mode="json"), f, sort_keys=False)
+    tmp.replace(path)

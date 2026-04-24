@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# reload-config — re-render service configs from /etc/drone/config.yaml
+# Usage: reload-config {video|mavlink|zerotier|lte|all}
+set -euo pipefail
+
+CONFIG_DIR="${DRONE_CONFIG_DIR:-/etc/drone}"
+RENDER_ROOT="${DRONE_RENDER_ROOT:-/etc}"
+SYSTEMCTL="${DRONE_SYSTEMCTL:-systemctl}"
+PYTHON_BIN="${DRONE_PYTHON:-/opt/drone/venv/bin/python}"
+if [ ! -x "$PYTHON_BIN" ]; then
+    PYTHON_BIN="$(command -v python3)"
+fi
+
+SUBSYSTEM="${1:-}"
+if [ -z "$SUBSYSTEM" ]; then
+    echo "usage: reload-config {video|mavlink|zerotier|lte|all}" >&2
+    exit 2
+fi
+
+render_subsystem() {
+    local sub="$1"
+    case "$sub" in
+        video)
+            mkdir -p "$RENDER_ROOT/default"
+            DRONE_CONFIG_DIR="$CONFIG_DIR" "$PYTHON_BIN" -c "
+from drone_ui.config import load_config
+from drone_ui.render import render_drone_video_env
+import sys
+sys.stdout.write(render_drone_video_env(load_config()))
+" > "$RENDER_ROOT/default/drone-video.tmp"
+            mv "$RENDER_ROOT/default/drone-video.tmp" "$RENDER_ROOT/default/drone-video"
+            ;;
+        mavlink)
+            mkdir -p "$RENDER_ROOT/mavlink-router"
+            DRONE_CONFIG_DIR="$CONFIG_DIR" "$PYTHON_BIN" -c "
+from drone_ui.config import load_config
+from drone_ui.render import render_mavlink_router_conf
+import sys
+sys.stdout.write(render_mavlink_router_conf(load_config()))
+" > "$RENDER_ROOT/mavlink-router/main.conf.tmp"
+            mv "$RENDER_ROOT/mavlink-router/main.conf.tmp" "$RENDER_ROOT/mavlink-router/main.conf"
+            ;;
+        zerotier|lte)
+            # Imperative, handled elsewhere; nothing to render from YAML.
+            :
+            ;;
+        *)
+            echo "unknown subsystem: $sub" >&2
+            return 2
+            ;;
+    esac
+}
+
+restart_services_for() {
+    local sub="$1"
+    case "$sub" in
+        video)   "$SYSTEMCTL" try-restart drone-video.service   ;;
+        mavlink) "$SYSTEMCTL" try-restart mavlink-router.service ;;
+        zerotier|lte) : ;;
+    esac
+}
+
+subsystems_to_render=()
+case "$SUBSYSTEM" in
+    all) subsystems_to_render=(video mavlink zerotier lte) ;;
+    video|mavlink|zerotier|lte) subsystems_to_render=("$SUBSYSTEM") ;;
+    *) echo "unknown subsystem: $SUBSYSTEM" >&2; exit 2 ;;
+esac
+
+# Snapshot current config for possible rollback.
+if [ -f "$CONFIG_DIR/config.yaml" ]; then
+    cp "$CONFIG_DIR/config.yaml" "$CONFIG_DIR/config.yaml.staging"
+fi
+
+for sub in "${subsystems_to_render[@]}"; do
+    render_subsystem "$sub"
+done
+
+for sub in "${subsystems_to_render[@]}"; do
+    if ! restart_services_for "$sub"; then
+        echo "restart failed for $sub — rolling back" >&2
+        if [ -f "$CONFIG_DIR/config.yaml.last-good" ]; then
+            cp "$CONFIG_DIR/config.yaml.last-good" "$CONFIG_DIR/config.yaml"
+            for s in "${subsystems_to_render[@]}"; do render_subsystem "$s" || true; done
+            for s in "${subsystems_to_render[@]}"; do restart_services_for "$s" || true; done
+        fi
+        exit 1
+    fi
+done
+
+# Success: promote current → last-good.
+if [ -f "$CONFIG_DIR/config.yaml" ]; then
+    cp "$CONFIG_DIR/config.yaml" "$CONFIG_DIR/config.yaml.last-good"
+fi
+rm -f "$CONFIG_DIR/config.yaml.staging"

@@ -1,0 +1,32 @@
+# Source of truth for drone-companion. Edit then run `sudo drone-reload-config all`.
+first_run: true
+hostname: drone
+video:
+  resolution: 640x480
+  fps: 20
+  bitrate: 600000
+  profile: baseline
+  level: "4"
+  intra: 5
+  fec_percent: 0
+  autofocus: continuous
+  exposure_ev: -0.5
+  gcs_host: 0.0.0.0
+  gcs_port: 5600
+  snapshot_port: null
+mavlink:
+  uart_device: /dev/serial0
+  baud: 115200
+  endpoints:
+    - type: udp-server
+      address: 0.0.0.0
+      port: 14550
+    - type: tcp-server
+      address: 0.0.0.0
+      port: 5760
+zerotier:
+  networks: []
+lte:
+  enabled: true
+  apn: null
+  sim_pin: null

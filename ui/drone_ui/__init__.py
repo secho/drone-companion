@@ -1,0 +1,1 @@
+"""drone-companion web UI."""

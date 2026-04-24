@@ -1,0 +1,30 @@
+# Rendered by drone-companion reload-config. Edit config.yaml, not this file.
+[General]
+TcpServerPort = 5760
+ReportStats = false
+MavlinkDialect = auto
+Log = /var/log/mavlink-router
+LogMode = while-armed
+
+[UartEndpoint fc]
+Device = {{ mavlink.uart_device }}
+Baud = {{ mavlink.baud }}
+FlowControl = 0
+
+{% for ep in mavlink.endpoints %}
+{% if ep.type.startswith('udp') %}
+[UdpEndpoint ep_{{ loop.index }}]
+{% if ep.type == 'udp-server' %}
+Mode = Server
+{% else %}
+Mode = Normal
+{% endif %}
+Address = {{ ep.address }}
+Port = {{ ep.port }}
+{% else %}
+[TcpEndpoint ep_{{ loop.index }}]
+Address = {{ ep.address }}
+Port = {{ ep.port }}
+{% endif %}
+
+{% endfor %}
