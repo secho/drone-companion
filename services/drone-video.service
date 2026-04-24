@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Camera H.264/RTP stream to GCS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=drone
+SupplementaryGroups=video
+EnvironmentFile=/etc/default/drone-video
+ExecStart=/opt/drone/scripts/stream.sh
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

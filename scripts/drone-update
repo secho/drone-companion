@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# drone-update — pull latest main and re-run the installer
+set -euo pipefail
+if [ ! -d /opt/drone/.git ]; then
+    echo "Not a git checkout at /opt/drone — can't auto-update." >&2
+    exit 1
+fi
+cd /opt/drone
+git fetch --depth=50 origin
+git reset --hard "origin/${DRONE_BRANCH:-main}"
+exec /opt/drone/install.sh
