@@ -40,4 +40,4 @@ exec /usr/bin/rpicam-vid \
       ! h264parse config-interval=-1 \
       ! rtph264pay pt=96 config-interval=-1 mtu=1200 \
       $FEC_STAGE \
-      ! multiudpsink clients="$CLIENTS" sync=false async=false 2>/tmp/gst.err
+      ! multiudpsink clients="$CLIENTS" sync=false async=false
