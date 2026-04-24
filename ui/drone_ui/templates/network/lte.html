@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}LTE{% endblock %}
+{% block content %}
+<h1>LTE modem</h1>
+{% if 'error' in device or 'error' in status %}
+  <div class="card">
+    <p class="status-warn">
+      No HiLink modem detected at <code>http://192.168.8.1/</code>.
+    </p>
+    <p style="color:var(--muted);font-size:0.9rem">
+      This is normal if you haven't plugged one in. If you have, make sure it's connected to
+      the Pi's data USB port (on Pi Zero 2W, that's the one labeled <strong>USB</strong> —
+      not <strong>PWR</strong>) and that you've rebooted since running the installer.
+      Supported family: Huawei E3372 (HiLink mode).
+    </p>
+  </div>
+{% else %}
+  <div class="card">
+    <h2>Device</h2>
+    <p>
+      {{ device.get('DeviceName', '?') }} ·
+      IMEI {{ device.get('Imei', '?') }} ·
+      IMSI {{ device.get('Imsi', '?') }} ·
+      workmode: <code>{{ device.get('workmode', '?') }}</code>
+    </p>
+  </div>
+  <div class="card">
+    <h2>Signal</h2>
+    <p>
+      RSRP: <code>{{ signal.get('rsrp', '?') }}</code> ·
+      RSRQ: <code>{{ signal.get('rsrq', '?') }}</code> ·
+      SINR: <code>{{ signal.get('sinr', '?') }}</code> ·
+      RSSI: <code>{{ signal.get('rssi', '?') }}</code>
+    </p>
+    <p style="color:var(--muted);font-size:0.85rem">
+      Target ranges: RSRP &gt; -100 dBm, RSRQ &gt; -15 dB, SINR &gt; 0 dB.
+      Values worse than that mean you need a better antenna or a different location for the dongle.
+    </p>
+  </div>
+  <div class="card">
+    <h2>Connection</h2>
+    <p>Status code: <code>{{ status.get('ConnectionStatus', '?') }}</code>
+       (901 = connected, 902 = disconnected, 905 = connection failed).</p>
+  </div>
+{% endif %}
+{% endblock %}

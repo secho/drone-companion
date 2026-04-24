@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Status{% endblock %}
+{% block content %}
+<h1>{{ hostname }}</h1>
+<div class="card">
+  <p style="color:var(--muted);margin:0">
+    {{ model }} · up {{ (uptime_s // 3600) }}h {{ ((uptime_s % 3600) // 60) }}m
+  </p>
+</div>
+
+<div class="card">
+  <h2>Services</h2>
+  <ul style="list-style:none;padding:0;margin:0">
+    {% for name, state in services.items() %}
+      <li style="padding:0.25rem 0">
+        <strong>{{ name }}</strong>:
+        <span class="status-{{ 'ok' if state == 'active' else ('err' if state == 'failed' else 'warn') }}">{{ state }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card">
+  <h2>ZeroTier</h2>
+  {% if zerotier.node_id %}
+    <p>Node: <code>{{ zerotier.node_id }}</code>
+      · <span class="status-{{ 'ok' if zerotier.online else 'warn' }}">{{ 'online' if zerotier.online else 'offline' }}</span>
+      · v{{ zerotier.version }}
+    </p>
+  {% else %}
+    <p class="status-warn">zerotier-one not running.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>LTE</h2>
+  {% if 'error' in hilink %}
+    <p class="status-warn">No HiLink modem at 192.168.8.1 (normal if you don't have one).</p>
+  {% else %}
+    <p>Connection status: <code>{{ hilink.get('ConnectionStatus', '?') }}</code></p>
+  {% endif %}
+</div>
+
+{% for svc, text in logs.items() %}
+  <div class="card">
+    <h2>{{ svc }} — last 15 lines</h2>
+    <pre>{{ text or '(no recent log)' }}</pre>
+  </div>
+{% endfor %}
+{% endblock %}

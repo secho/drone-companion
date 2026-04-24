@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}MAVLink{% endblock %}
+{% block flash %}
+  {% if flash %}<div class="banner banner-{{ flash[0] }}">{{ flash[1] }}</div>{% endif %}
+{% endblock %}
+{% block content %}
+<h1>MAVLink router</h1>
+<div class="card">
+<form method="post">
+  <label>UART device</label>
+  <input name="uart_device" value="{{ mavlink.uart_device }}">
+
+  <label>Baud rate</label>
+  <select name="baud">
+    {% for b in [9600, 57600, 115200, 230400, 460800, 921600] %}
+      <option value="{{ b }}" {% if mavlink.baud == b %}selected{% endif %}>{{ b }}</option>
+    {% endfor %}
+  </select>
+
+  <h2 style="margin-top:1.25rem">Endpoints</h2>
+  <input type="hidden" name="endpoint_count" value="{{ mavlink.endpoints|length }}">
+  <table>
+    <thead><tr><th>Type</th><th>Address</th><th>Port</th></tr></thead>
+    <tbody>
+      {% for ep in mavlink.endpoints %}
+        {% set i = loop.index0 %}
+        <tr>
+          <td>
+            <select name="endpoint_type_{{ i }}">
+              {% for t in ["udp-server", "udp-client", "tcp-server"] %}
+                <option value="{{ t }}" {% if ep.type == t %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td><input name="endpoint_addr_{{ i }}" value="{{ ep.address }}"></td>
+          <td><input name="endpoint_port_{{ i }}" type="number" value="{{ ep.port }}" min="1" max="65535"></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem">
+    Add or remove endpoint rows by editing <code>/etc/drone/config.yaml</code> directly for now.
+  </p>
+
+  <p style="margin-top:1rem"><button type="submit">Save &amp; restart mavlink-router</button></p>
+</form>
+</div>
+{% endblock %}

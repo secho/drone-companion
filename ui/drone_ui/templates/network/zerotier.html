@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}ZeroTier{% endblock %}
+{% block flash %}
+  {% if flash %}<div class="banner banner-{{ flash[0] }}">{{ flash[1] }}</div>{% endif %}
+{% endblock %}
+{% block content %}
+<h1>ZeroTier</h1>
+<div class="card">
+  {% if info.node_id %}
+    <p>This Pi: <code>{{ info.node_id }}</code> ·
+       <span class="status-{{ 'ok' if info.online else 'err' }}">{{ 'online' if info.online else 'offline' }}</span> ·
+       v{{ info.version }}</p>
+  {% else %}
+    <p class="status-err">zerotier-one is not running on this Pi.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Join a network</h2>
+  <form method="post">
+    <input type="hidden" name="action" value="join">
+    <label>16-character ZeroTier network ID</label>
+    <input name="network_id" required pattern="[0-9a-fA-F]{16}" maxlength="16"
+           minlength="16" placeholder="4753cf475f1847d2">
+    <p style="margin-top:0.75rem"><button type="submit">Join</button></p>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Current networks</h2>
+  {% if live_networks %}
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>IPs</th><th></th></tr></thead>
+      <tbody>
+      {% for n in live_networks %}
+        <tr>
+          <td><code>{{ n.id }}</code></td>
+          <td>{{ n.name }}</td>
+          <td><span class="status-{{ 'ok' if n.status == 'OK' else 'warn' }}">{{ n.status }}</span></td>
+          <td>{{ n.ips }}</td>
+          <td>
+            <form method="post" style="margin:0">
+              <input type="hidden" name="action" value="leave">
+              <input type="hidden" name="network_id" value="{{ n.id }}">
+              <button type="submit" class="danger">Leave</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="status-warn">No ZeroTier networks joined yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

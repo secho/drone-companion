@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Setup · ZeroTier{% endblock %}
+{% block flash %}
+  {% if flash %}<div class="banner banner-{{ flash[0] }}">{{ flash[1] }}</div>{% endif %}
+{% endblock %}
+{% block content %}
+<ul class="wizard-steps">
+  <li>1. GCS</li>
+  <li>2. Video</li>
+  <li class="active">3. ZeroTier</li>
+  <li>4. Summary</li>
+</ul>
+<h1>Join a ZeroTier network? (optional)</h1>
+<div class="card">
+  <p style="color:var(--muted)">
+    If you want to reach your drone from anywhere on the internet (not just your home Wi-Fi),
+    paste your ZeroTier network ID here. Leave blank to skip.
+  </p>
+  <form method="post">
+    <label>ZeroTier network ID (16 hex characters)</label>
+    <input name="network_id" pattern="[0-9a-fA-F]{16}" maxlength="16"
+           placeholder="e.g. 4753cf475f1847d2">
+    <p style="margin-top:1rem">
+      <button type="submit">Next</button>
+      <a href="/setup/4" style="margin-left:1rem;color:var(--muted)">skip this step</a>
+    </p>
+  </form>
+</div>
+{% endblock %}

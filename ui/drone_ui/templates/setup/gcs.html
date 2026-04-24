@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Setup · GCS{% endblock %}
+{% block content %}
+<ul class="wizard-steps">
+  <li class="active">1. GCS</li>
+  <li>2. Video</li>
+  <li>3. ZeroTier</li>
+  <li>4. Summary</li>
+</ul>
+<h1>Where does your ground station live?</h1>
+<div class="card">
+  <p style="color:var(--muted)">
+    Enter the IP address of the computer running QGroundControl or Mission Planner.
+    The Pi will stream video there. You can change this later.
+  </p>
+  <form method="post">
+    <label>GCS IP address</label>
+    <input name="gcs_host" value="{{ cfg.video.gcs_host if cfg.video.gcs_host != '0.0.0.0' else '' }}"
+           placeholder="e.g. 192.168.1.50 or 10.147.19.83" required>
+    <p style="margin-top:1rem"><button type="submit">Next</button></p>
+  </form>
+</div>
+{% endblock %}

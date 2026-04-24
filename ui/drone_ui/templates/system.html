@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}System{% endblock %}
+{% block flash %}
+  {% if flash %}<div class="banner banner-{{ flash[0] }}">{{ flash[1] }}</div>{% endif %}
+{% endblock %}
+{% block content %}
+<h1>System</h1>
+<div class="card">
+  <h2>Reboot</h2>
+  <p style="color:var(--muted);font-size:0.9rem">Needed after changing USB host-mode settings or for LTE dongle re-enumeration.</p>
+  <form method="post" action="/system/reboot" onsubmit="return confirm('Reboot the Pi now?');">
+    <button type="submit" class="danger">Reboot</button>
+  </form>
+</div>
+<div class="card">
+  <h2>Diagnostics</h2>
+  <p>Download a bundle of the current config + recent service logs + install log. Attach to bug reports.</p>
+  <p><a href="/system/diagnostics"><button type="button">Download diagnostics.tar.gz</button></a></p>
+</div>
+<div class="card">
+  <h2>Update</h2>
+  <p>To upgrade to the latest release, SSH into the Pi and run:</p>
+  <pre>sudo drone-update</pre>
+</div>
+{% endblock %}

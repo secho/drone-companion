@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Setup · Summary{% endblock %}
+{% block content %}
+<ul class="wizard-steps">
+  <li>1. GCS</li>
+  <li>2. Video</li>
+  <li>3. ZeroTier</li>
+  <li class="active">4. Summary</li>
+</ul>
+<h1>Ready to go</h1>
+<div class="card">
+  <h2>Your settings</h2>
+  <ul>
+    <li>Ground station IP: <code>{{ cfg.video.gcs_host }}</code></li>
+    <li>Video: {{ cfg.video.resolution }} @ {{ cfg.video.fps }}fps / {{ cfg.video.bitrate // 1000 }} kbps ({{ cfg.video.profile }})</li>
+    <li>ZeroTier networks: {% if cfg.zerotier.networks %}<code>{{ cfg.zerotier.networks|join(', ') }}</code>{% else %}none{% endif %}</li>
+    <li>MAVLink: {{ cfg.mavlink.uart_device }} @ {{ cfg.mavlink.baud }}</li>
+  </ul>
+  <form method="post" action="/setup/finish">
+    <p style="margin-top:1rem"><button type="submit">Save and start</button></p>
+  </form>
+  <p style="margin-top:0.5rem;color:var(--muted);font-size:0.85rem">
+    After saving, point your GCS at:
+    <br>MAVLink TCP: <code>{{ cfg.video.gcs_host if cfg.video.gcs_host != '0.0.0.0' else 'this Pi\'s IP' }}:5760</code>
+    <br>Video: UDP h.264 on port {{ cfg.video.gcs_port }}
+  </p>
+</div>
+{% endblock %}
