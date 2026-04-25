@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-REPO_URL="${DRONE_REPO_URL:-https://github.com/YOUR_GH_ORG/drone-companion.git}"
+REPO_URL="${DRONE_REPO_URL:-https://github.com/secho/drone-companion.git}"
 REPO_BRANCH="${DRONE_REPO_BRANCH:-main}"
 
 # When piped via curl, SCRIPT_DIR points at a temp dir without our files.
