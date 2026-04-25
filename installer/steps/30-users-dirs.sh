@@ -18,10 +18,11 @@ fi
 usermod -aG video,dialout drone || true
 
 install -d -o drone -g drone -m 0755 "$OPT" "$OPT/scripts" "$OPT/templates" "$LOGDIR"
-install -d -o root  -g root  -m 0755 "$CFG"
+# /etc/drone must be writable by `drone` so the UI can save config.yaml on form submits.
+install -d -o drone -g drone -m 0755 "$CFG"
 
 if [ ! -f "$CFG/config.yaml" ]; then
-    install -o root -g root -m 0644 "$SCRIPT_DIR/../templates/config.example.yaml" "$CFG/config.yaml"
+    install -o drone -g drone -m 0644 "$SCRIPT_DIR/../templates/config.example.yaml" "$CFG/config.yaml"
     log_info "Installed default config.yaml at $CFG/config.yaml"
 else
     log_info "$CFG/config.yaml exists — leaving untouched"

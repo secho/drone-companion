@@ -49,7 +49,9 @@ class ZerotierInfo:
 
 
 def zerotier_info() -> ZerotierInfo:
-    cp = _run(["zerotier-cli", "info"])
+    # zerotier-cli reads /var/lib/zerotier-one/authtoken.secret which is root-only,
+    # so even read-only commands need sudo here.
+    cp = _run(["sudo", "-n", "zerotier-cli", "info"])
     parts = cp.stdout.strip().split()
     # "200 info <node> <ver> ONLINE"
     if len(parts) >= 5 and parts[0] == "200" and parts[1] == "info":
@@ -59,7 +61,7 @@ def zerotier_info() -> ZerotierInfo:
 
 def zerotier_listnetworks() -> list[dict]:
     """Parse `zerotier-cli listnetworks` into a list of dicts."""
-    cp = _run(["zerotier-cli", "listnetworks"])
+    cp = _run(["sudo", "-n", "zerotier-cli", "listnetworks"])
     networks: list[dict] = []
     for line in cp.stdout.splitlines():
         parts = line.split()

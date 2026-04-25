@@ -27,6 +27,16 @@ def test_zerotier_info_online(mock_run):
     info = services.zerotier_info()
     assert info.node_id == "abc1234567"
     assert info.online is True
+    # Regression: zerotier-cli reads /var/lib/zerotier-one/authtoken.secret which is root-only,
+    # so even reads must go through sudo -n. (Bug landed in v0.1 deploy on drone2.)
+    mock_run.assert_called_with(["sudo", "-n", "zerotier-cli", "info"])
+
+
+@patch("drone_ui.services._run")
+def test_zerotier_listnetworks_uses_sudo(mock_run):
+    mock_run.return_value = MagicMock(stdout="", returncode=0)
+    services.zerotier_listnetworks()
+    mock_run.assert_called_with(["sudo", "-n", "zerotier-cli", "listnetworks"])
 
 
 @patch("drone_ui.services._run")

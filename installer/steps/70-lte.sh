@@ -42,9 +42,21 @@ else
     log_info "Not a Pi Zero 2W (or no boot files) — skipping USB host-mode tweak"
 fi
 
+# Remove legacy systemd-networkd gadget config that pins usb0 to 10.55.0.1/24
+# (Raspberry Pi OS ships this when USB-gadget is configured; it conflicts with HiLink DHCP.)
+NETWORKD_DIR="${DRONE_NETWORKD_DIR:-/etc/systemd/network}"
+if [ -f "$NETWORKD_DIR/10-usb0.network" ]; then
+    log_info "Removing legacy systemd-networkd gadget config $NETWORKD_DIR/10-usb0.network"
+    mv "$NETWORKD_DIR/10-usb0.network" "$NETWORKD_DIR/10-usb0.network.gadget-bak"
+fi
+
 # NetworkManager profile for HiLink dongles on usb0 (DHCP, high metric)
 NMCLI="${DRONE_NMCLI:-nmcli}"
 if command -v "$NMCLI" >/dev/null 2>&1; then
+    # Drop any auto-generated NM profile literally named "usb0" (it picks up settings from the
+    # dropped systemd-networkd file above and prevents drone-lte from binding).
+    "$NMCLI" connection delete usb0 2>/dev/null || true
+
     if ! "$NMCLI" connection show drone-lte >/dev/null 2>&1; then
         "$NMCLI" connection add type ethernet ifname usb0 con-name drone-lte \
             ipv4.method auto ipv4.route-metric 800 autoconnect yes 2>/dev/null || \
