@@ -2,9 +2,14 @@
 # install.sh — drone-companion installer.
 # Usage: curl -fsSL https://.../install.sh | sudo bash
 #    or: git clone ... && cd drone-companion && sudo ./install.sh
-set -euo pipefail
+set -eo pipefail
+# Note: -u (nounset) is intentionally OFF here because BASH_SOURCE[0] is
+# unset when this script is piped via `curl | bash`. Step files re-enable -u.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# When piped via curl, BASH_SOURCE[0] is empty, so dirname returns ".".
+# Fall back to $0 (which is "bash" when piped) — that's fine because we
+# detect the missing repo below and self-bootstrap to /opt/drone.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}" 2>/dev/null)" 2>/dev/null && pwd || echo /tmp)"
 
 REPO_URL="${DRONE_REPO_URL:-https://github.com/secho/drone-companion.git}"
 REPO_BRANCH="${DRONE_REPO_BRANCH:-main}"
@@ -13,6 +18,14 @@ REPO_BRANCH="${DRONE_REPO_BRANCH:-main}"
 # Detect that and self-bootstrap.
 if [ ! -f "$SCRIPT_DIR/installer/lib/common.sh" ]; then
     echo "[INFO] Bootstrapping: cloning $REPO_URL into /opt/drone..."
+
+    # Fresh Raspberry Pi OS Lite ships without git. apt-install it first.
+    if ! command -v git >/dev/null 2>&1; then
+        echo "[INFO] git not found — installing via apt..."
+        apt-get update -qq
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git ca-certificates
+    fi
+
     mkdir -p /opt
     if [ -d /opt/drone/.git ]; then
         cd /opt/drone && git fetch --depth=1 origin "$REPO_BRANCH" \
@@ -22,6 +35,9 @@ if [ ! -f "$SCRIPT_DIR/installer/lib/common.sh" ]; then
     fi
     exec /opt/drone/install.sh "$@"
 fi
+
+# We're running from a real checkout — turn nounset on for the rest.
+set -u
 
 # shellcheck source=installer/lib/common.sh
 source "$SCRIPT_DIR/installer/lib/common.sh"
