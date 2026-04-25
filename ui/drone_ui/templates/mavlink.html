@@ -9,15 +9,23 @@
 
 <div class="card">
 <form method="post">
-  <label>UART (which serial port to use for the flight controller)</label>
+  <label>Which GPIO pins is the flight controller wired to?</label>
   <select name="uart_alias" id="uart_alias" onchange="updateGpioVisual(this.value)">
     {% for alias, opt in uart_options.items() %}
       <option value="{{ alias }}" {% if alias == mavlink.uart_alias %}selected{% endif %}>{{ opt.label }}</option>
     {% endfor %}
   </select>
   <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem">
-    On Pi Zero 2W only UART0 is available. On Pi 4 / Pi 5 you can pick any of UART0–UART5.
-    Changing the UART updates <code>/boot/firmware/config.txt</code> with the matching <code>dtoverlay</code>; a reboot is required for the new pins to come up.
+    {% if uart_options|length == 1 %}
+      Your Pi has only one UART block on the GPIO header — GPIO 14/15 (pins 8/10).
+      The SoC hard-wires the UART signal there; remapping to other pins isn't possible
+      on this hardware (it's a chip limitation, not a software one).
+    {% else %}
+      Pick whichever pins are convenient on your wiring. The companion picks the right
+      hardware UART block for those pins and points <code>mavlink-router</code> at it
+      automatically. <strong>A reboot is required</strong> after changing — the kernel needs to
+      enable the alternate UART.
+    {% endif %}
   </p>
 
   <h2 style="margin-top:1.5rem">Pin assignment</h2>

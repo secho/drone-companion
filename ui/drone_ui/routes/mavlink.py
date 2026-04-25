@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from pathlib import Path
 
 from drone_ui import services
-from drone_ui.config import MavlinkEndpoint, UART_OPTIONS, load_config, save_config
+from drone_ui.config import MavlinkEndpoint, UART_OPTIONS, available_uart_options, load_config, save_config
 from drone_ui.main import templates
 
 router = APIRouter()
@@ -20,7 +20,7 @@ def mavlink_get(request: Request) -> HTMLResponse:
         {
             "request": request,
             "mavlink": cfg.mavlink,
-            "uart_options": UART_OPTIONS,
+            "uart_options": available_uart_options(),
             "current_uart": UART_OPTIONS.get(cfg.mavlink.uart_alias, UART_OPTIONS["uart0"]),
             "reboot_required": _reboot_required(),
             "flash": None,
@@ -68,7 +68,7 @@ async def mavlink_post(request: Request) -> HTMLResponse:
         {
             "request": request,
             "mavlink": cfg.mavlink,
-            "uart_options": UART_OPTIONS,
+            "uart_options": available_uart_options(),
             "current_uart": UART_OPTIONS.get(cfg.mavlink.uart_alias, UART_OPTIONS["uart0"]),
             "reboot_required": _reboot_required(),
             "flash": flash,

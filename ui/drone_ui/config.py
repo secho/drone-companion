@@ -56,7 +56,7 @@ UART_OPTIONS: dict[str, dict] = {
         "gpio_tx": 14, "gpio_rx": 15,
         "physical_tx": 8, "physical_rx": 10,
         "overlay": None,  # primary; only needs disable-bt (step 65 handles it)
-        "label": "UART0 — GPIO 14/15 (pins 8/10)",
+        "label": "GPIO 14 / GPIO 15 (header pins 8 / 10) — default",
         "supported_models": ["zero2w", "pi4", "pi5"],
     },
     "uart2": {
@@ -64,7 +64,7 @@ UART_OPTIONS: dict[str, dict] = {
         "gpio_tx": 0, "gpio_rx": 1,
         "physical_tx": 27, "physical_rx": 28,
         "overlay": "uart2",
-        "label": "UART2 — GPIO 0/1 (pins 27/28) — Pi 4/5 only",
+        "label": "GPIO 0 / GPIO 1 (header pins 27 / 28)",
         "supported_models": ["pi4", "pi5"],
     },
     "uart3": {
@@ -72,7 +72,7 @@ UART_OPTIONS: dict[str, dict] = {
         "gpio_tx": 4, "gpio_rx": 5,
         "physical_tx": 7, "physical_rx": 29,
         "overlay": "uart3",
-        "label": "UART3 — GPIO 4/5 (pins 7/29) — Pi 4/5 only",
+        "label": "GPIO 4 / GPIO 5 (header pins 7 / 29)",
         "supported_models": ["pi4", "pi5"],
     },
     "uart4": {
@@ -80,7 +80,7 @@ UART_OPTIONS: dict[str, dict] = {
         "gpio_tx": 8, "gpio_rx": 9,
         "physical_tx": 24, "physical_rx": 21,
         "overlay": "uart4",
-        "label": "UART4 — GPIO 8/9 (pins 24/21) — Pi 4/5 only",
+        "label": "GPIO 8 / GPIO 9 (header pins 24 / 21)",
         "supported_models": ["pi4", "pi5"],
     },
     "uart5": {
@@ -88,10 +88,34 @@ UART_OPTIONS: dict[str, dict] = {
         "gpio_tx": 12, "gpio_rx": 13,
         "physical_tx": 32, "physical_rx": 33,
         "overlay": "uart5",
-        "label": "UART5 — GPIO 12/13 (pins 32/33) — Pi 4/5 only",
+        "label": "GPIO 12 / GPIO 13 (header pins 32 / 33)",
         "supported_models": ["pi4", "pi5"],
     },
 }
+
+
+def detect_pi_family() -> str:
+    """Return one of: 'zero2w', 'pi4', 'pi5', 'unknown'."""
+    try:
+        with open("/proc/device-tree/model") as f:
+            model = f.read()
+    except Exception:
+        return "unknown"
+    if "Pi Zero 2" in model:
+        return "zero2w"
+    if "Pi 4" in model:
+        return "pi4"
+    if "Pi 5" in model:
+        return "pi5"
+    return "unknown"
+
+
+def available_uart_options() -> dict[str, dict]:
+    """UART options filtered to those the current Pi model physically supports."""
+    fam = detect_pi_family()
+    if fam == "unknown":
+        return UART_OPTIONS  # safe fallback — show everything
+    return {k: v for k, v in UART_OPTIONS.items() if fam in v["supported_models"]}
 
 
 class ZerotierConfig(BaseModel):
