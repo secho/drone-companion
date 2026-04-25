@@ -7,12 +7,21 @@
 <h1>Video configuration</h1>
 <div class="card">
 <form method="post">
-  <label for="preset">Quality preset</label>
+  <label for="codec">Codec</label>
+  <select name="codec" id="codec">
+    <option value="h264"  {% if video.codec == 'h264'  %}selected{% endif %}>H.264 (compatible with QGroundControl built-in viewer)</option>
+    <option value="mjpeg" {% if video.codec == 'mjpeg' %}selected{% endif %}>MJPEG (better under packet loss; needs separate viewer — see scripts/gcs-view-mjpeg.sh)</option>
+  </select>
+
+  <label for="preset">Quality preset (H.264 only)</label>
   <select name="preset" id="preset">
     {% for p in presets %}
       <option value="{{ p }}" {% if p == current_preset %}selected{% endif %}>{{ p }}</option>
     {% endfor %}
   </select>
+
+  <label for="mjpeg_quality">MJPEG quality (1–100, used only when codec = MJPEG)</label>
+  <input type="number" name="mjpeg_quality" id="mjpeg_quality" value="{{ video.mjpeg_quality }}" min="1" max="100">
 
   <label for="gcs_host">GCS host (where to send video)</label>
   <input type="text" name="gcs_host" id="gcs_host" value="{{ video.gcs_host }}" required>

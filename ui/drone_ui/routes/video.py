@@ -40,10 +40,12 @@ def video_get(request: Request) -> HTMLResponse:
 def video_post(
     request: Request,
     preset: str = Form(...),
+    codec: str = Form("h264"),
     gcs_host: str = Form(...),
     gcs_port: int = Form(...),
     autofocus: str = Form("continuous"),
     exposure_ev: float = Form(-0.5),
+    mjpeg_quality: int = Form(60),
 ) -> HTMLResponse:
     cfg = load_config()
     if preset in PRESETS:
@@ -51,10 +53,12 @@ def video_post(
         cfg.video.resolution = res  # type: ignore[assignment]
         cfg.video.fps = fps
         cfg.video.bitrate = br
+    cfg.video.codec = codec  # type: ignore[assignment]
     cfg.video.gcs_host = gcs_host
     cfg.video.gcs_port = gcs_port
     cfg.video.autofocus = autofocus  # type: ignore[assignment]
     cfg.video.exposure_ev = exposure_ev
+    cfg.video.mjpeg_quality = mjpeg_quality
     save_config(cfg)
 
     cp = services.reload_config("video")

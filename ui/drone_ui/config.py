@@ -14,13 +14,15 @@ def _config_dir() -> Path:
 
 
 class VideoConfig(BaseModel):
+    codec: Literal["h264", "mjpeg"] = "h264"
     resolution: Literal["640x480", "1280x720", "1920x1080"] = "640x480"
     fps: int = Field(20, ge=5, le=60)
-    bitrate: int = Field(600_000, ge=100_000, le=20_000_000)
-    profile: Literal["baseline", "main", "high"] = "baseline"
+    bitrate: int = Field(600_000, ge=100_000, le=20_000_000)  # h264 only
+    profile: Literal["baseline", "main", "high"] = "baseline"  # h264 only
     level: str = "4"
-    intra: int = Field(5, ge=1, le=120)
-    fec_percent: int = Field(0, ge=0, le=100)
+    intra: int = Field(5, ge=1, le=120)  # h264 only
+    fec_percent: int = Field(0, ge=0, le=100)  # h264 only
+    mjpeg_quality: int = Field(60, ge=1, le=100)  # mjpeg only — 50-70 sweet spot
     autofocus: Literal["continuous", "manual", "off"] = "continuous"
     exposure_ev: float = Field(-0.5, ge=-3.0, le=3.0)
     gcs_host: str = "0.0.0.0"
