@@ -114,5 +114,5 @@ See [04-lte-setup.md](04-lte-setup.md) for signal thresholds and antenna tips. M
 If you installed via the tarball path instead of `curl | bash`, there's no `.git` directory. Re-install via the canonical path:
 ```
 sudo rm -rf /opt/drone
-curl -fsSL https://raw.githubusercontent.com/<org>/drone-companion/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/secho/drone-companion/main/install.sh | sudo bash
 ```

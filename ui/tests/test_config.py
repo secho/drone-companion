@@ -39,5 +39,6 @@ def test_zerotier_network_id_validation():
         Config(**(DEFAULT_CONFIG | {"zerotier": {"networks": ["nothex1234567890"]}}))
     with pytest.raises(Exception):
         Config(**(DEFAULT_CONFIG | {"zerotier": {"networks": ["abc"]}}))
-    ok = Config(**(DEFAULT_CONFIG | {"zerotier": {"networks": ["4753CF475F1847D2"]}}))
-    assert ok.zerotier.networks == ["4753cf475f1847d2"]
+    # Mixed-case input must be normalized to lowercase by the validator.
+    ok = Config(**(DEFAULT_CONFIG | {"zerotier": {"networks": ["ABCDEF1234567890"]}}))
+    assert ok.zerotier.networks == ["abcdef1234567890"]

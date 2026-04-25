@@ -139,7 +139,7 @@ For more on hardware compatibility see [`docs/02-hardware.md`](docs/02-hardware.
    ```
 3. **Run the installer** (5–10 min on Pi 4B/5, 15–25 min on Pi Zero 2W — it builds mavlink-router from source on the Pi):
    ```
-   curl -fsSL https://raw.githubusercontent.com/<org>/drone-companion/main/install.sh | sudo bash
+   curl -fsSL https://raw.githubusercontent.com/secho/drone-companion/main/install.sh | sudo bash
    ```
 4. **If on a Pi Zero 2W**, reboot when prompted — the installer enables USB host mode (`dwc2,dr_mode=host`) so LTE dongles enumerate. Pi 4B / Pi 5 already have host mode by default.
 5. **Plug in the LTE dongle** (Huawei E3372 or compatible HiLink). The Pi will pick up DHCP from it on `usb0`.

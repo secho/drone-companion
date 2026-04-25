@@ -45,7 +45,7 @@ The first connection will ask you to confirm the host key — type `yes`.
 ## Step 3 — Run the installer
 
 ```
-curl -fsSL https://raw.githubusercontent.com/<org>/drone-companion/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/secho/drone-companion/main/install.sh | sudo bash
 ```
 
 What this does:

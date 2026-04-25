@@ -10,7 +10,7 @@ Run this before tagging a release. Ideally on all three target Pi models.
 
 ## Install
 
-- [ ] `curl -fsSL https://raw.githubusercontent.com/<org>/drone-companion/main/install.sh | sudo bash` exits 0.
+- [ ] `curl -fsSL https://raw.githubusercontent.com/secho/drone-companion/main/install.sh | sudo bash` exits 0.
 - [ ] `/var/log/drone-install.log` has no `ERROR` lines.
 - [ ] `ls /var/lib/drone/markers/` shows all 9 `*.done` markers.
 - [ ] On Pi Zero 2W only: `/boot/firmware/cmdline.txt` no longer contains `g_ether`, and `/boot/firmware/config.txt` has `dtoverlay=dwc2,dr_mode=host` in `[all]`.

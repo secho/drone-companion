@@ -91,12 +91,12 @@ def test_zerotier_join_valid_id(mock_services, tmp_config_dir):
     mock_services.zerotier_listnetworks.return_value = []
     r = TestClient(app).post(
         "/network/zerotier",
-        data={"action": "join", "network_id": "4753cf475f1847d2"},
+        data={"action": "join", "network_id": "abcdef1234567890"},
     )
     assert r.status_code == 200
-    mock_services.zerotier_join.assert_called_with("4753cf475f1847d2")
+    mock_services.zerotier_join.assert_called_with("abcdef1234567890")
     cfg = load_config()
-    assert "4753cf475f1847d2" in cfg.zerotier.networks
+    assert "abcdef1234567890" in cfg.zerotier.networks
 
 
 @patch("drone_ui.routes.network.zerotier.services")

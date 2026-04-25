@@ -50,9 +50,9 @@ def test_zerotier_info_offline_when_no_output(mock_run):
 @patch("drone_ui.services._run")
 def test_zerotier_join(mock_run):
     mock_run.return_value = MagicMock(stdout="200 join OK", returncode=0)
-    services.zerotier_join("4753cf475f1847d2")
+    services.zerotier_join("abcdef1234567890")
     mock_run.assert_called_with(
-        ["sudo", "-n", "zerotier-cli", "join", "4753cf475f1847d2"]
+        ["sudo", "-n", "zerotier-cli", "join", "abcdef1234567890"]
     )
 
 
@@ -80,12 +80,12 @@ def test_zerotier_listnetworks_parses_row(mock_run):
     mock_run.return_value = MagicMock(
         stdout=(
             "200 listnetworks <nwid> <name> <mac> <status> <type> <dev> <ZT assigned ips>\n"
-            "200 listnetworks 4753cf475f1847d2 crazy_christensen d2:19:df:4f:a7:15 OK PRIVATE feth1126 10.147.19.83/24\n"
+            "200 listnetworks abcdef1234567890 my-network d2:19:df:4f:a7:15 OK PRIVATE feth1126 10.147.20.50/24\n"
         ),
         returncode=0,
     )
     nets = services.zerotier_listnetworks()
     assert len(nets) == 1
-    assert nets[0]["id"] == "4753cf475f1847d2"
-    assert nets[0]["name"] == "crazy_christensen"
+    assert nets[0]["id"] == "abcdef1234567890"
+    assert nets[0]["name"] == "my-network"
     assert nets[0]["status"] == "OK"
