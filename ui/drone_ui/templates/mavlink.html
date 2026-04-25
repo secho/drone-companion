@@ -10,7 +10,12 @@
 <div class="card">
 <form method="post">
   <label>Which GPIO pins is the flight controller wired to?</label>
-  <select name="uart_alias" id="uart_alias" onchange="updateGpioVisual(this.value)">
+  <select name="uart_alias" id="uart_alias"
+          hx-get="/mavlink/gpio-preview"
+          hx-trigger="change"
+          hx-target="#gpio-preview-area"
+          hx-swap="innerHTML"
+          hx-vals='js:{alias: document.getElementById("uart_alias").value}'>
     {% for alias, opt in uart_options.items() %}
       <option value="{{ alias }}" {% if alias == mavlink.uart_alias %}selected{% endif %}>{{ opt.label }}</option>
     {% endfor %}
@@ -29,7 +34,9 @@
   </p>
 
   <h2 style="margin-top:1.5rem">Pin assignment</h2>
-  {% include "_gpio_header.html" %}
+  <div id="gpio-preview-area">
+    {% include "_gpio_header.html" %}
+  </div>
 
   <label style="margin-top:1rem">Baud rate</label>
   <select name="baud">
@@ -67,25 +74,7 @@
 </form>
 </div>
 
-<script>
-// Map UART alias → pin highlights, fed from the server-rendered table below.
-const uartPinMap = {
-  {% for alias, opt in uart_options.items() %}
-  "{{ alias }}": { tx: {{ opt.physical_tx }}, rx: {{ opt.physical_rx }}, txGpio: {{ opt.gpio_tx }}, rxGpio: {{ opt.gpio_rx }} }{% if not loop.last %},{% endif %}
-  {% endfor %}
-};
-function updateGpioVisual(alias) {
-  const m = uartPinMap[alias];
-  if (!m) return;
-  document.querySelectorAll('.gpio-pin').forEach(p => {
-    p.classList.remove('pin-tx', 'pin-rx');
-  });
-  const txEl = document.querySelector(`.gpio-pin[data-pin="${m.tx}"]`);
-  const rxEl = document.querySelector(`.gpio-pin[data-pin="${m.rx}"]`);
-  if (txEl) txEl.classList.add('pin-tx');
-  if (rxEl) rxEl.classList.add('pin-rx');
-  document.getElementById('uart-pin-summary').textContent =
-    `TX = pin ${m.tx} (GPIO ${m.txGpio}), RX = pin ${m.rx} (GPIO ${m.rxGpio})`;
-}
-</script>
+<!-- HTMX handles the live preview: dropdown change → GET /mavlink/gpio-preview?alias=X
+     → server returns _gpio_header.html partial → swapped into #gpio-preview-area. -->
+
 {% endblock %}

@@ -13,6 +13,18 @@ def _reboot_required() -> bool:
     return Path("/var/lib/drone/reboot-required").exists()
 
 
+@router.get("/mavlink/gpio-preview", response_class=HTMLResponse)
+def gpio_preview(request: Request, alias: str) -> HTMLResponse:
+    """HTMX endpoint — re-renders just the GPIO header partial with `alias` selected.
+    Used for live preview when the dropdown changes; no save happens."""
+    opt = UART_OPTIONS.get(alias, UART_OPTIONS["uart0"])
+    cfg = load_config()
+    return templates.TemplateResponse(
+        request, "_gpio_header.html",
+        {"request": request, "current_uart": opt, "mavlink": cfg.mavlink},
+    )
+
+
 @router.get("/mavlink", response_class=HTMLResponse)
 def mavlink_get(request: Request) -> HTMLResponse:
     cfg = load_config()

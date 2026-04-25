@@ -1,47 +1,146 @@
-{# Visual 40-pin Pi GPIO header. Reference: https://pinout.xyz #}
-{# Pin labels follow standard Pi Zero/3/4/5 layout. #}
+{# Visual 40-pin Pi GPIO header rendered as SVG.
+   Reference: https://pinout.xyz, https://raspberrypi.com/documentation
+   Pin layout is identical across Pi Zero 2W, Pi 4B, Pi 5. #}
 {% set pins = [
-  ('1','3V3','left','3v3'),    ('2','5V','right','5v'),
-  ('3','GPIO 2','left','data'),  ('4','5V','right','5v'),
-  ('5','GPIO 3','left','data'),  ('6','GND','right','gnd'),
-  ('7','GPIO 4','left','data'),  ('8','GPIO 14','right','data'),
-  ('9','GND','left','gnd'),      ('10','GPIO 15','right','data'),
-  ('11','GPIO 17','left','data'),('12','GPIO 18','right','data'),
-  ('13','GPIO 27','left','data'),('14','GND','right','gnd'),
-  ('15','GPIO 22','left','data'),('16','GPIO 23','right','data'),
-  ('17','3V3','left','3v3'),     ('18','GPIO 24','right','data'),
-  ('19','GPIO 10','left','data'),('20','GND','right','gnd'),
-  ('21','GPIO 9','left','data'), ('22','GPIO 25','right','data'),
-  ('23','GPIO 11','left','data'),('24','GPIO 8','right','data'),
-  ('25','GND','left','gnd'),     ('26','GPIO 7','right','data'),
-  ('27','GPIO 0','left','data'), ('28','GPIO 1','right','data'),
-  ('29','GPIO 5','left','data'), ('30','GND','right','gnd'),
-  ('31','GPIO 6','left','data'), ('32','GPIO 12','right','data'),
-  ('33','GPIO 13','left','data'),('34','GND','right','gnd'),
-  ('35','GPIO 19','left','data'),('36','GPIO 16','right','data'),
-  ('37','GPIO 26','left','data'),('38','GPIO 20','right','data'),
-  ('39','GND','left','gnd'),     ('40','GPIO 21','right','data'),
+  ('1','3V3','3v3'),    ('2','5V','5v'),
+  ('3','GPIO 2 (SDA)','data'),   ('4','5V','5v'),
+  ('5','GPIO 3 (SCL)','data'),   ('6','GND','gnd'),
+  ('7','GPIO 4','data'),         ('8','GPIO 14 (TXD)','data'),
+  ('9','GND','gnd'),             ('10','GPIO 15 (RXD)','data'),
+  ('11','GPIO 17','data'),       ('12','GPIO 18','data'),
+  ('13','GPIO 27','data'),       ('14','GND','gnd'),
+  ('15','GPIO 22','data'),       ('16','GPIO 23','data'),
+  ('17','3V3','3v3'),            ('18','GPIO 24','data'),
+  ('19','GPIO 10 (MOSI)','data'),('20','GND','gnd'),
+  ('21','GPIO 9 (MISO)','data'), ('22','GPIO 25','data'),
+  ('23','GPIO 11 (SCLK)','data'),('24','GPIO 8 (CE0)','data'),
+  ('25','GND','gnd'),            ('26','GPIO 7 (CE1)','data'),
+  ('27','GPIO 0 (ID_SD)','data'),('28','GPIO 1 (ID_SC)','data'),
+  ('29','GPIO 5','data'),        ('30','GND','gnd'),
+  ('31','GPIO 6','data'),        ('32','GPIO 12','data'),
+  ('33','GPIO 13','data'),       ('34','GND','gnd'),
+  ('35','GPIO 19','data'),       ('36','GPIO 16','data'),
+  ('37','GPIO 26','data'),       ('38','GPIO 20','data'),
+  ('39','GND','gnd'),            ('40','GPIO 21','data'),
 ] %}
 
 <p id="uart-pin-summary" class="uart-pin-summary">
-  TX = pin {{ current_uart.physical_tx }} (GPIO {{ current_uart.gpio_tx }}),
-  RX = pin {{ current_uart.physical_rx }} (GPIO {{ current_uart.gpio_rx }})
+  TX → pin {{ current_uart.physical_tx }} (GPIO {{ current_uart.gpio_tx }}) ·
+  RX ← pin {{ current_uart.physical_rx }} (GPIO {{ current_uart.gpio_rx }}) ·
+  GND → any of pins 6, 9, 14, 20, 25, 30, 34, 39
 </p>
 
-<div class="gpio-header">
+<div class="gpio-svg-wrap">
+<svg viewBox="0 0 600 460" xmlns="http://www.w3.org/2000/svg" class="gpio-svg" role="img" aria-label="Raspberry Pi 40-pin GPIO header">
+  <!-- PCB background -->
+  <rect x="0" y="0" width="600" height="460" rx="14" fill="#0e3a1f" />
+  <rect x="0" y="0" width="600" height="460" rx="14" fill="url(#pcbnoise)" />
+
+  <!-- Connector black strip -->
+  <rect x="245" y="20" width="110" height="420" rx="6" fill="#0a0a0c" stroke="#2a2a30" stroke-width="1" />
+
+  <!-- "GPIO" label on the connector -->
+  <text x="300" y="14" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" fill="#9aa0a6">RASPBERRY PI · 40-PIN GPIO</text>
+
+  <!-- "Pin 1" indicator -->
+  <text x="200" y="40" text-anchor="end" font-family="ui-monospace, monospace" font-size="10" fill="#fbbf24">▶ pin 1</text>
+
+  <defs>
+    <radialGradient id="pingold" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="60%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#7c2d12"/>
+    </radialGradient>
+    <radialGradient id="pingold-tx" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="60%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </radialGradient>
+    <radialGradient id="pingold-rx" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#bfdbfe"/>
+      <stop offset="60%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </radialGradient>
+    <pattern id="pcbnoise" patternUnits="userSpaceOnUse" width="6" height="6">
+      <rect width="6" height="6" fill="transparent" />
+      <circle cx="1" cy="1" r="0.4" fill="#000" opacity="0.18"/>
+      <circle cx="4" cy="4" r="0.4" fill="#fff" opacity="0.04"/>
+    </pattern>
+  </defs>
+
+  {# Pins are laid out in two columns of 20 rows. Pin 1 is top-left, pin 2 top-right, etc. #}
+  {% set row_h = 20 %}
+  {% set top_y = 30 %}
   {% for pin in pins %}
-    {% set num, label, side, kind = pin %}
+    {% set num, label, kind = pin %}
+    {% set i = loop.index0 %}
+    {% set is_left = (i % 2 == 0) %}
+    {% set row = i // 2 %}
+    {% set cx = 280 if is_left else 320 %}
+    {% set cy = top_y + row * row_h %}
     {% set is_tx = num|int == current_uart.physical_tx %}
     {% set is_rx = num|int == current_uart.physical_rx %}
-    <div class="gpio-pin pin-{{ side }} pin-kind-{{ kind }}{% if is_tx %} pin-tx{% endif %}{% if is_rx %} pin-rx{% endif %}"
-         data-pin="{{ num }}">
-      <span class="pin-label">{{ label }}</span>
-      <span class="pin-num">{{ num }}</span>
-    </div>
+    {% set fill =
+        'url(#pingold-tx)' if is_tx else
+        ('url(#pingold-rx)' if is_rx else 'url(#pingold)') %}
+    {% set ring_color =
+        '#4ade80' if is_tx else
+        ('#60a5fa' if is_rx else 'transparent') %}
+    {% set label_color =
+        '#fb923c' if kind == '3v3' else
+        ('#ef4444' if kind == '5v' else
+         ('#6b7280' if kind == 'gnd' else '#d1d5db')) %}
+
+    {# Highlight ring when TX/RX #}
+    {% if is_tx or is_rx %}
+      <circle cx="{{ cx }}" cy="{{ cy }}" r="11" fill="none" stroke="{{ ring_color }}" stroke-width="2" />
+    {% endif %}
+    {# Pin pad (square for pin 1, round for the rest, like real Pi PCBs) #}
+    {% if num == '1' %}
+      <rect x="{{ cx - 6 }}" y="{{ cy - 6 }}" width="12" height="12" fill="{{ fill }}" stroke="#451a03" stroke-width="0.6" />
+    {% else %}
+      <circle cx="{{ cx }}" cy="{{ cy }}" r="6.5" fill="{{ fill }}" stroke="#451a03" stroke-width="0.6"/>
+    {% endif %}
+
+    {# Pin number, on the connector strip side #}
+    <text x="{{ cx + (-15 if is_left else 15) }}" y="{{ cy + 3 }}"
+          text-anchor="{{ 'end' if is_left else 'start' }}"
+          font-family="ui-monospace, monospace" font-size="9" fill="#6b7280">{{ num }}</text>
+
+    {# Function label, outside the connector #}
+    <text x="{{ 235 if is_left else 365 }}" y="{{ cy + 3 }}"
+          text-anchor="{{ 'end' if is_left else 'start' }}"
+          font-family="ui-monospace, monospace" font-size="11" fill="{{ label_color }}"
+          font-weight="{{ '600' if is_tx or is_rx else '400' }}">{{ label }}</text>
+
+    {# TX / RX badge #}
+    {% if is_tx %}
+      <text x="{{ cx + (-30 if is_left else 30) }}" y="{{ cy + 3 }}"
+            text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#4ade80">TX</text>
+    {% elif is_rx %}
+      <text x="{{ cx + (-30 if is_left else 30) }}" y="{{ cy + 3 }}"
+            text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#60a5fa">RX</text>
+    {% endif %}
   {% endfor %}
+
+  <!-- Legend -->
+  <g transform="translate(20,420)">
+    <circle cx="6" cy="6" r="5" fill="url(#pingold)" stroke="#451a03" stroke-width="0.6"/>
+    <text x="18" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#9aa0a6">free GPIO</text>
+    <circle cx="100" cy="6" r="5" fill="url(#pingold-tx)"/>
+    <circle cx="100" cy="6" r="9" fill="none" stroke="#4ade80" stroke-width="2"/>
+    <text x="115" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#4ade80">TX → FC RX</text>
+    <circle cx="220" cy="6" r="5" fill="url(#pingold-rx)"/>
+    <circle cx="220" cy="6" r="9" fill="none" stroke="#60a5fa" stroke-width="2"/>
+    <text x="235" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#60a5fa">RX ← FC TX</text>
+    <text x="380" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#fb923c">3V3</text>
+    <text x="430" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#ef4444">5V (don't use)</text>
+    <text x="540" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#6b7280">GND</text>
+  </g>
+</svg>
 </div>
+
 <p style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem">
-  <span class="legend-tx">TX</span> = drone-companion → flight controller RX ·
-  <span class="legend-rx">RX</span> = flight controller TX → drone-companion ·
-  share GND with the FC. <strong>Don't power the FC from the Pi's 5 V pin.</strong>
+  Wire the FC's UART RX to the Pi's TX, FC TX to Pi RX (cross-over), and share GND.
+  <strong>Don't power the FC from the Pi's 5 V pin</strong> — modern FCs have their own BEC and feeding 5 V back can damage either board.
 </p>
