@@ -1,6 +1,6 @@
-# LTE failover
+# LTE primary uplink
 
-Completely optional. Adds mobile internet for the Pi so it can maintain ZeroTier reach from anywhere, even without Wi-Fi.
+LTE is the **primary internet connection** when the drone is in flight — Wi-Fi is the bench/setup network. The Pi tethers through a Huawei HiLink-style dongle on `usb0`; outbound traffic (including the ZeroTier tunnel that carries MAVLink and video back to the GCS) goes over LTE.
 
 ## Hardware
 
@@ -32,12 +32,14 @@ If the modem is flashing "no service" even with full signal:
 
 ## Routing priority
 
-The installer sets a NetworkManager profile on `usb0` with `ipv4.route-metric=800` — higher than `wlan0`'s default (600). This means Wi-Fi wins by default, and `usb0` only takes over if Wi-Fi is down.
+The installer sets a NetworkManager profile on `usb0` with `ipv4.route-metric=800` — higher than `wlan0`'s default (600). This means **on the bench**, with both connected, Wi-Fi wins (faster, no carrier latency). **In flight**, with no Wi-Fi reachable, LTE is the only path so it wins by default.
 
-To **prefer LTE**, edit the metric:
+To **prefer LTE even when Wi-Fi is up** (recommended for actual flight ops once the drone has left the workshop):
 ```
 sudo nmcli connection modify drone-lte ipv4.route-metric 400
 ```
+
+After that, `usb0` is the primary outbound interface whenever the dongle has signal.
 
 ## Signal quality thresholds
 

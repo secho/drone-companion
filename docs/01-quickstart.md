@@ -89,7 +89,17 @@ First time you visit, you'll land on the **setup wizard**:
 
 4. **Summary** — review and click **Save and start**. The Pi starts streaming video and MAVLink.
 
-## Step 5 — Connect your ground station
+## Step 5a — Plug in the LTE dongle
+
+LTE is the **primary internet uplink** in flight. Wi-Fi is the bench setup network. Both work simultaneously; the routing priority is set so LTE takes over once Wi-Fi is out of range.
+
+1. Plug a Huawei HiLink-style dongle (E3372 family or compatible) into the Pi's data USB port. On Pi Zero 2W that's the **middle** micro-USB labeled `USB` (not `PWR`); use a micro-USB OTG adapter cable.
+2. The web UI's **LTE** page should populate with signal/carrier info within ~10 s.
+3. If the page says "No HiLink modem detected", confirm the dongle has a working SIM by visiting `http://192.168.8.1/` directly from a laptop on the same Wi-Fi as the Pi (the dongle's own admin UI).
+
+For external antennas, signal thresholds, and APN tweaks see [04-lte-setup.md](04-lte-setup.md).
+
+## Step 5b — Connect your ground station
 
 See [03-gcs-setup.md](03-gcs-setup.md) for screenshots. Short version:
 
