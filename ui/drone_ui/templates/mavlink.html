@@ -2,15 +2,28 @@
 {% block title %}MAVLink{% endblock %}
 {% block flash %}
   {% if flash %}<div class="banner banner-{{ flash[0] }}">{{ flash[1] }}</div>{% endif %}
+  {% if reboot_required %}<div class="banner banner-err"><strong>Reboot required</strong> — UART overlay change won't take effect until you reboot. Go to System → Reboot.</div>{% endif %}
 {% endblock %}
 {% block content %}
 <h1>MAVLink router</h1>
+
 <div class="card">
 <form method="post">
-  <label>UART device</label>
-  <input name="uart_device" value="{{ mavlink.uart_device }}">
+  <label>UART (which serial port to use for the flight controller)</label>
+  <select name="uart_alias" id="uart_alias" onchange="updateGpioVisual(this.value)">
+    {% for alias, opt in uart_options.items() %}
+      <option value="{{ alias }}" {% if alias == mavlink.uart_alias %}selected{% endif %}>{{ opt.label }}</option>
+    {% endfor %}
+  </select>
+  <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem">
+    On Pi Zero 2W only UART0 is available. On Pi 4 / Pi 5 you can pick any of UART0–UART5.
+    Changing the UART updates <code>/boot/firmware/config.txt</code> with the matching <code>dtoverlay</code>; a reboot is required for the new pins to come up.
+  </p>
 
-  <label>Baud rate</label>
+  <h2 style="margin-top:1.5rem">Pin assignment</h2>
+  {% include "_gpio_header.html" %}
+
+  <label style="margin-top:1rem">Baud rate</label>
   <select name="baud">
     {% for b in [9600, 57600, 115200, 230400, 460800, 921600] %}
       <option value="{{ b }}" {% if mavlink.baud == b %}selected{% endif %}>{{ b }}</option>
@@ -45,4 +58,26 @@
   <p style="margin-top:1rem"><button type="submit">Save &amp; restart mavlink-router</button></p>
 </form>
 </div>
+
+<script>
+// Map UART alias → pin highlights, fed from the server-rendered table below.
+const uartPinMap = {
+  {% for alias, opt in uart_options.items() %}
+  "{{ alias }}": { tx: {{ opt.physical_tx }}, rx: {{ opt.physical_rx }}, txGpio: {{ opt.gpio_tx }}, rxGpio: {{ opt.gpio_rx }} }{% if not loop.last %},{% endif %}
+  {% endfor %}
+};
+function updateGpioVisual(alias) {
+  const m = uartPinMap[alias];
+  if (!m) return;
+  document.querySelectorAll('.gpio-pin').forEach(p => {
+    p.classList.remove('pin-tx', 'pin-rx');
+  });
+  const txEl = document.querySelector(`.gpio-pin[data-pin="${m.tx}"]`);
+  const rxEl = document.querySelector(`.gpio-pin[data-pin="${m.rx}"]`);
+  if (txEl) txEl.classList.add('pin-tx');
+  if (rxEl) rxEl.classList.add('pin-rx');
+  document.getElementById('uart-pin-summary').textContent =
+    `TX = pin ${m.tx} (GPIO ${m.txGpio}), RX = pin ${m.rx} (GPIO ${m.rxGpio})`;
+}
+</script>
 {% endblock %}

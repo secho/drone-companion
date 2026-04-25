@@ -32,11 +32,40 @@ sys.stdout.write(render_drone_video_env(load_config()))
             ;;
         mavlink)
             mkdir -p "$RENDER_ROOT/mavlink-router"
+            # Sync uart_device from uart_alias (lookup in UART_OPTIONS) and update the boot config
+            # dtoverlay if needed. This may flip a "reboot needed" marker.
             DRONE_CONFIG_DIR="$CONFIG_DIR" "$PYTHON_BIN" -c "
-from drone_ui.config import load_config
-from drone_ui.render import render_mavlink_router_conf
-import sys
-sys.stdout.write(render_mavlink_router_conf(load_config()))
+from drone_ui.config import load_config, save_config, UART_OPTIONS
+import os, pathlib, sys
+cfg = load_config()
+opt = UART_OPTIONS.get(cfg.mavlink.uart_alias, UART_OPTIONS['uart0'])
+expected_device = opt['device']
+if cfg.mavlink.uart_device != expected_device:
+    cfg.mavlink.uart_device = expected_device
+    save_config(cfg)
+
+# Manage the dtoverlay block in /boot/firmware/config.txt (override DRONE_BOOT_CONFIG for tests).
+boot_cfg = os.environ.get('DRONE_BOOT_CONFIG', '/boot/firmware/config.txt')
+overlay = opt.get('overlay')
+if pathlib.Path(boot_cfg).is_file():
+    txt = pathlib.Path(boot_cfg).read_text()
+    # Remove any previously-managed line.
+    new = '\n'.join(l for l in txt.splitlines() if not l.startswith('# drone-uart:'))
+    new_lines = [l for l in new.splitlines()
+                 if not (l.startswith('dtoverlay=uart') and l.split('=', 1)[1].split(',')[0]
+                         in ('uart2','uart3','uart4','uart5'))]
+    new_text = '\n'.join(new_lines).rstrip() + '\n'
+    if overlay:
+        new_text += f'# drone-uart: managed line (do not edit)\ndtoverlay={overlay}\n'
+    if new_text != txt:
+        pathlib.Path(boot_cfg).write_text(new_text)
+        # Mark reboot required.
+        marker = pathlib.Path(os.environ.get('DRONE_REBOOT_MARKER', '/var/lib/drone/reboot-required'))
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.touch()
+        sys.stderr.write('Boot config dtoverlay changed. Reboot required for new UART to come up.\n')
+
+sys.stdout.write(__import__('drone_ui.render', fromlist=['render_mavlink_router_conf']).render_mavlink_router_conf(load_config()))
 " > "$RENDER_ROOT/mavlink-router/main.conf.tmp"
             mv "$RENDER_ROOT/mavlink-router/main.conf.tmp" "$RENDER_ROOT/mavlink-router/main.conf"
             ;;

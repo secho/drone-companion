@@ -1,18 +1,30 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
+from pathlib import Path
 
 from drone_ui import services
-from drone_ui.config import MavlinkEndpoint, load_config, save_config
+from drone_ui.config import MavlinkEndpoint, UART_OPTIONS, load_config, save_config
 from drone_ui.main import templates
 
 router = APIRouter()
+
+
+def _reboot_required() -> bool:
+    return Path("/var/lib/drone/reboot-required").exists()
 
 
 @router.get("/mavlink", response_class=HTMLResponse)
 def mavlink_get(request: Request) -> HTMLResponse:
     cfg = load_config()
     return templates.TemplateResponse(request, "mavlink.html",
-        {"request": request, "mavlink": cfg.mavlink, "flash": None},
+        {
+            "request": request,
+            "mavlink": cfg.mavlink,
+            "uart_options": UART_OPTIONS,
+            "current_uart": UART_OPTIONS.get(cfg.mavlink.uart_alias, UART_OPTIONS["uart0"]),
+            "reboot_required": _reboot_required(),
+            "flash": None,
+        },
     )
 
 
@@ -36,7 +48,11 @@ async def mavlink_post(request: Request) -> HTMLResponse:
             )
 
     cfg = load_config()
-    cfg.mavlink.uart_device = str(form.get("uart_device", "/dev/serial0"))
+    requested_alias = str(form.get("uart_alias", "uart0"))
+    if requested_alias in UART_OPTIONS:
+        cfg.mavlink.uart_alias = requested_alias  # type: ignore[assignment]
+        # uart_device gets re-derived by reload-config from the alias lookup.
+        cfg.mavlink.uart_device = UART_OPTIONS[requested_alias]["device"]
     cfg.mavlink.baud = int(form.get("baud", "115200"))  # type: ignore[assignment]
     if endpoints:
         cfg.mavlink.endpoints = endpoints
@@ -49,5 +65,12 @@ async def mavlink_post(request: Request) -> HTMLResponse:
         flash = ("ok", "Saved and restarted mavlink-router.")
 
     return templates.TemplateResponse(request, "mavlink.html",
-        {"request": request, "mavlink": cfg.mavlink, "flash": flash},
+        {
+            "request": request,
+            "mavlink": cfg.mavlink,
+            "uart_options": UART_OPTIONS,
+            "current_uart": UART_OPTIONS.get(cfg.mavlink.uart_alias, UART_OPTIONS["uart0"]),
+            "reboot_required": _reboot_required(),
+            "flash": flash,
+        },
     )

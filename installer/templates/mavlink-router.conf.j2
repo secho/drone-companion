@@ -7,6 +7,7 @@ Log = /var/log/mavlink-router
 LogMode = while-armed
 
 [UartEndpoint fc]
+{# uart_device is computed from uart_alias by reload-config, but we trust whatever's set. #}
 Device = {{ mavlink.uart_device }}
 Baud = {{ mavlink.baud }}
 FlowControl = 0

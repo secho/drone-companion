@@ -37,7 +37,8 @@ class MavlinkEndpoint(BaseModel):
 
 
 class MavlinkConfig(BaseModel):
-    uart_device: str = "/dev/serial0"
+    uart_alias: Literal["uart0", "uart2", "uart3", "uart4", "uart5"] = "uart0"
+    uart_device: str = "/dev/serial0"  # rendered from uart_alias by reload-config
     baud: Literal[9600, 57600, 115200, 230400, 460800, 921600] = 115200
     endpoints: list[MavlinkEndpoint] = Field(
         default_factory=lambda: [
@@ -45,6 +46,52 @@ class MavlinkConfig(BaseModel):
             MavlinkEndpoint(type="tcp-server", port=5760),
         ]
     )
+
+
+# UART alias → device path + GPIO pin pair (BCM) + dtoverlay needed
+# Reference: https://www.raspberrypi.com/documentation/computers/configuration.html
+UART_OPTIONS: dict[str, dict] = {
+    "uart0": {
+        "device": "/dev/serial0",
+        "gpio_tx": 14, "gpio_rx": 15,
+        "physical_tx": 8, "physical_rx": 10,
+        "overlay": None,  # primary; only needs disable-bt (step 65 handles it)
+        "label": "UART0 — GPIO 14/15 (pins 8/10)",
+        "supported_models": ["zero2w", "pi4", "pi5"],
+    },
+    "uart2": {
+        "device": "/dev/ttyAMA1",
+        "gpio_tx": 0, "gpio_rx": 1,
+        "physical_tx": 27, "physical_rx": 28,
+        "overlay": "uart2",
+        "label": "UART2 — GPIO 0/1 (pins 27/28) — Pi 4/5 only",
+        "supported_models": ["pi4", "pi5"],
+    },
+    "uart3": {
+        "device": "/dev/ttyAMA2",
+        "gpio_tx": 4, "gpio_rx": 5,
+        "physical_tx": 7, "physical_rx": 29,
+        "overlay": "uart3",
+        "label": "UART3 — GPIO 4/5 (pins 7/29) — Pi 4/5 only",
+        "supported_models": ["pi4", "pi5"],
+    },
+    "uart4": {
+        "device": "/dev/ttyAMA3",
+        "gpio_tx": 8, "gpio_rx": 9,
+        "physical_tx": 24, "physical_rx": 21,
+        "overlay": "uart4",
+        "label": "UART4 — GPIO 8/9 (pins 24/21) — Pi 4/5 only",
+        "supported_models": ["pi4", "pi5"],
+    },
+    "uart5": {
+        "device": "/dev/ttyAMA4",
+        "gpio_tx": 12, "gpio_rx": 13,
+        "physical_tx": 32, "physical_rx": 33,
+        "overlay": "uart5",
+        "label": "UART5 — GPIO 12/13 (pins 32/33) — Pi 4/5 only",
+        "supported_models": ["pi4", "pi5"],
+    },
+}
 
 
 class ZerotierConfig(BaseModel):

@@ -53,3 +53,41 @@ th, td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(
   list-style: none; padding: 0; font-size: 0.85rem; color: var(--muted);
 }
 .wizard-steps li.active { color: var(--accent); font-weight: 500; }
+
+/* --- GPIO header visualization --- */
+.uart-pin-summary {
+  background: #0d1115; border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.5rem 0.75rem; margin: 0 0 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9rem;
+}
+.gpio-header {
+  display: grid;
+  grid-template-columns: 1fr 28px 28px 1fr;
+  gap: 4px 8px; align-items: center;
+  background: #0d1115; padding: 0.75rem; border: 1px solid var(--border);
+  border-radius: 6px; max-width: 520px;
+}
+.gpio-pin {
+  font-size: 0.78rem; padding: 2px 6px; border-radius: 4px;
+  white-space: nowrap; line-height: 1.4; display: flex; gap: 4px; align-items: center;
+}
+.gpio-pin .pin-num {
+  display: inline-block; min-width: 22px; text-align: center;
+  background: #2a2a30; color: var(--muted); border-radius: 50%;
+  font-size: 0.7rem; padding: 1px 0;
+}
+.gpio-pin.pin-left  { grid-column: 1 / span 2; justify-content: flex-end; text-align: right; }
+.gpio-pin.pin-left .pin-num { order: 2; }
+.gpio-pin.pin-right { grid-column: 3 / span 2; justify-content: flex-start; }
+.gpio-pin.pin-kind-3v3  .pin-label { color: #fb923c; }       /* orange */
+.gpio-pin.pin-kind-5v   .pin-label { color: #ef4444; }       /* red */
+.gpio-pin.pin-kind-gnd  .pin-label { color: #6b7280; }       /* grey */
+.gpio-pin.pin-kind-data .pin-label { color: #9ca3af; }
+.gpio-pin.pin-tx { background: #14532d; }
+.gpio-pin.pin-tx .pin-label { color: #4ade80 !important; font-weight: 600; }
+.gpio-pin.pin-tx .pin-num   { background: #4ade80; color: #000; }
+.gpio-pin.pin-rx { background: #1e3a8a; }
+.gpio-pin.pin-rx .pin-label { color: #60a5fa !important; font-weight: 600; }
+.gpio-pin.pin-rx .pin-num   { background: #60a5fa; color: #000; }
+.legend-tx { color: #4ade80; font-weight: 600; }
+.legend-rx { color: #60a5fa; font-weight: 600; }
