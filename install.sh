@@ -27,11 +27,14 @@ if [ ! -f "$SCRIPT_DIR/installer/lib/common.sh" ]; then
     fi
 
     mkdir -p /opt
+    # /opt/drone is owned by the `drone` system user but we're invoking git as root,
+    # which trips git's "dubious ownership" guard. Whitelist the path inside this command.
+    GIT="git -c safe.directory=/opt/drone"
     if [ -d /opt/drone/.git ]; then
-        cd /opt/drone && git fetch --depth=1 origin "$REPO_BRANCH" \
-            && git reset --hard "origin/$REPO_BRANCH"
+        cd /opt/drone && $GIT fetch --depth=1 origin "$REPO_BRANCH" \
+            && $GIT reset --hard "origin/$REPO_BRANCH"
     else
-        git clone --depth=1 --branch "$REPO_BRANCH" "$REPO_URL" /opt/drone
+        $GIT clone --depth=1 --branch "$REPO_BRANCH" "$REPO_URL" /opt/drone
     fi
     exec /opt/drone/install.sh "$@"
 fi

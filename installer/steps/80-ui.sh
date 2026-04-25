@@ -15,6 +15,10 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 log_info "Creating Python venv at $OPT/venv"
 # pip install -e writes drone_ui.egg-info into the source dir, so `drone` must own it
 chown -R drone:drone "$REPO_ROOT/ui"
+
+# Allow root (via sudo) to run git inside /opt/drone — the repo is owned by `drone`
+# system user, which makes git's default "dubious ownership" check refuse to operate.
+git config --global --add safe.directory /opt/drone 2>/dev/null || true
 sudo -u drone python3 -m venv "$OPT/venv"
 sudo -u drone "$OPT/venv/bin/pip" install --quiet --upgrade pip
 sudo -u drone "$OPT/venv/bin/pip" install --quiet -e "$REPO_ROOT/ui"

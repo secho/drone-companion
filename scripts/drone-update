@@ -6,6 +6,9 @@ if [ ! -d /opt/drone/.git ]; then
     exit 1
 fi
 cd /opt/drone
-git fetch --depth=50 origin
-git reset --hard "origin/${DRONE_BRANCH:-main}"
+# /opt/drone is owned by the `drone` user but we're running as root via sudo.
+# Whitelist the path so git's "dubious ownership" check doesn't reject us.
+GIT="git -c safe.directory=/opt/drone"
+$GIT fetch --depth=50 origin
+$GIT reset --hard "origin/${DRONE_BRANCH:-main}"
 exec /opt/drone/install.sh
