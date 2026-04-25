@@ -47,21 +47,19 @@ case "$CODEC" in
         ;;
 
     mjpeg)
-        # rpicam-vid's MJPEG output is per-frame JPEGs concatenated. We re-encode
-        # via gst's jpegenc to control quality precisely (q=$MJPEG_QUALITY).
+        # rpicam-vid encodes MJPEG on the GPU; we just frame and packetize.
         # Each frame is independent, so packet loss damages at most one frame —
         # better visual behavior under loss than H.264 at the cost of 3-5x bandwidth.
         exec /usr/bin/rpicam-vid \
             --timeout 0 --nopreview --flush \
             --width "$WIDTH" --height "$HEIGHT" --framerate "$FPS" \
-            --codec yuv420 \
+            --codec mjpeg --quality "$MJPEG_QUALITY" \
             --autofocus-mode "$AF_MODE" --ev "$EV" --awb auto \
             --output - \
           | /usr/bin/gst-launch-1.0 --gst-debug-level=1 -e \
               fdsrc fd=0 do-timestamp=true \
-              ! "video/x-raw,format=I420,width=${WIDTH},height=${HEIGHT},framerate=${FPS}/1" \
-              ! videoconvert \
-              ! jpegenc quality="$MJPEG_QUALITY" \
+              ! "image/jpeg,framerate=${FPS}/1,width=${WIDTH},height=${HEIGHT}" \
+              ! jpegparse \
               ! rtpjpegpay pt=26 mtu=1200 \
               ! multiudpsink clients="$CLIENTS" sync=false async=false
         ;;
