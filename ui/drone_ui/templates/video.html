@@ -46,10 +46,72 @@
 <div class="card">
   <h2>Current values</h2>
   <p style="color:var(--muted)">
-    {{ video.resolution }} · {{ video.fps }}fps · {{ video.bitrate // 1000 }}kbps ·
-    {{ video.profile }} profile · INTRA={{ video.intra }} · FEC={{ video.fec_percent }}%
+    Codec: <strong>{{ video.codec }}</strong> ·
+    {{ video.resolution }} · {{ video.fps }}fps ·
+    {% if video.codec == 'h264' %}
+      {{ video.bitrate // 1000 }}kbps · {{ video.profile }} profile · INTRA={{ video.intra }} · FEC={{ video.fec_percent }}%
+    {% else %}
+      JPEG quality {{ video.mjpeg_quality }}
+    {% endif %}
   </p>
-  <p style="color:var(--muted)">
+</div>
+
+{% if video.codec == 'h264' %}
+<div class="card">
+  <h2>How to view this stream (H.264)</h2>
+  <p>QGroundControl has a built-in H.264 viewer. <strong>Application Settings → Video</strong>:</p>
+  <ul>
+    <li><strong>Source:</strong> UDP h.264 Video Stream</li>
+    <li><strong>UDP Port:</strong> <code>{{ video.gcs_port }}</code></li>
+    <li><strong>Disable When Disarmed:</strong> unchecked (so video shows even before you arm the FC)</li>
+  </ul>
+  <p>Switch to the <strong>Fly</strong> view — video appears in the lower-left PiP within ~2 s.</p>
+
+  <p style="margin-top:1rem;color:var(--muted);font-size:0.9rem">
+    If your QGC is the official v5 macOS DMG, the Source dropdown only shows
+    "Video Stream Disabled" — that build was compiled without GStreamer. Either downgrade
+    to QGC v4.4.x, build v5 from source, or use the standalone viewer below.
+  </p>
+
+  <p style="margin-top:1rem"><strong>Standalone H.264 viewer</strong> (run on your GCS — works regardless of QGC):</p>
+  <pre>gst-launch-1.0 -q udpsrc port={{ video.gcs_port }} caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=H264,payload=96" \
+  ! rtpjitterbuffer latency=80 \
+  ! rtph264depay ! avdec_h264 \
+  ! videoconvert ! autovideosink sync=false</pre>
+  <p style="color:var(--muted);font-size:0.85rem">
+    Prereqs: <code>brew install gstreamer gst-plugins-base gst-plugins-good gst-libav</code>
+    on macOS, or <code>sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-libav</code> on Debian.
+  </p>
+</div>
+
+{% else %}{# mjpeg #}
+<div class="card">
+  <h2>How to view this stream (MJPEG)</h2>
+  <p>
+    QGroundControl's built-in viewer doesn't speak MJPEG-over-RTP, so use a standalone GStreamer pipeline.
+    The trade-off versus H.264: MJPEG uses 3–5× the bandwidth, but each frame is independent — packet loss
+    only damages a single frame instead of cascading green-block corruption across many. <strong>Best for
+    lossy wireless links</strong>.
+  </p>
+
+  <p style="margin-top:1rem"><strong>One-line viewer command</strong> (run on your GCS):</p>
+  <pre>gst-launch-1.0 -q udpsrc port={{ video.gcs_port }} caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=JPEG,payload=26" \
+  ! rtpjitterbuffer latency=80 drop-on-latency=true \
+  ! rtpjpegdepay ! jpegdec \
+  ! videoconvert ! autovideosink sync=false</pre>
+
+  <p>Or, if you have the drone-companion repo cloned on your GCS:</p>
+  <pre>scripts/gcs-view-mjpeg.sh {{ video.gcs_port }}</pre>
+
+  <p style="color:var(--muted);font-size:0.85rem">
+    Prereqs: <code>brew install gstreamer gst-plugins-base gst-plugins-good</code> on macOS, or
+    <code>sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-good</code> on Debian. No <code>gst-libav</code> needed for MJPEG.
+  </p>
+</div>
+{% endif %}
+
+<div class="card">
+  <p style="color:var(--muted);font-size:0.85rem;margin:0">
     Advanced params (profile, level, intra, fec_percent, snapshot_port) are editable in
     <code>/etc/drone/config.yaml</code>.
   </p>
