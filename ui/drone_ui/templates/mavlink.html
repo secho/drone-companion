@@ -21,15 +21,17 @@
     {% endfor %}
   </select>
   <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem">
-    {% if uart_options|length == 1 %}
+    {% if uart_options|length == 2 %}
       Your Pi has only one UART block on the GPIO header — GPIO 14/15 (pins 8/10).
       The SoC hard-wires the UART signal there; remapping to other pins isn't possible
-      on this hardware (it's a chip limitation, not a software one).
+      on this hardware (it's a chip limitation). If those pins are damaged on your board,
+      use the <strong>USB-to-TTL adapter</strong> option instead — it bypasses GPIO entirely.
     {% else %}
       Pick whichever pins are convenient on your wiring. The companion picks the right
       hardware UART block for those pins and points <code>mavlink-router</code> at it
       automatically. <strong>A reboot is required</strong> after changing — the kernel needs to
-      enable the alternate UART.
+      enable the alternate UART. The <strong>USB-to-TTL adapter</strong> option bypasses GPIO
+      entirely and is the right choice if the GPIO header is damaged or already used by something else.
     {% endif %}
   </p>
 

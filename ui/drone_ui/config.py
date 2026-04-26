@@ -37,7 +37,7 @@ class MavlinkEndpoint(BaseModel):
 
 
 class MavlinkConfig(BaseModel):
-    uart_alias: Literal["uart0", "uart2", "uart3", "uart4", "uart5"] = "uart0"
+    uart_alias: Literal["uart0", "uart2", "uart3", "uart4", "uart5", "usb_serial"] = "uart0"
     uart_device: str = "/dev/serial0"  # rendered from uart_alias by reload-config
     baud: Literal[9600, 57600, 115200, 230400, 460800, 921600] = 115200
     endpoints: list[MavlinkEndpoint] = Field(
@@ -90,6 +90,16 @@ UART_OPTIONS: dict[str, dict] = {
         "overlay": "uart5",
         "label": "GPIO 12 / GPIO 13 (header pins 32 / 33)",
         "supported_models": ["pi4", "pi5"],
+    },
+    # Bypasses GPIO entirely — for boards with damaged UART pins,
+    # or anyone who just prefers a USB connection.
+    "usb_serial": {
+        "device": "/dev/ttyUSB0",
+        "gpio_tx": None, "gpio_rx": None,
+        "physical_tx": None, "physical_rx": None,
+        "overlay": None,
+        "label": "USB-to-TTL adapter (e.g. CP2102, FT232, CH340) — /dev/ttyUSB0",
+        "supported_models": ["zero2w", "pi4", "pi5"],
     },
 }
 
