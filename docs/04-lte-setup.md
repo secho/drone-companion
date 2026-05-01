@@ -30,6 +30,24 @@ If the modem is flashing "no service" even with full signal:
 - Open `http://192.168.8.1/` directly in a browser on the same LAN (the modem has its own web UI). Check the APN there; some SIMs require a specific APN that's not autoselected.
 - Roaming: if it's an out-of-country SIM, data roaming must be enabled both on the SIM's plan and via the dongle's web UI.
 
+## Testing LTE-only behaviour (forcing all traffic over LTE)
+
+If you want to simulate "drone has flown out of Wi-Fi range", the safe way is:
+
+```
+sudo nmcli device disconnect wlan0
+```
+
+That brings Wi-Fi down for the rest of the current boot. **Reboot restores it** — the Wi-Fi profile's autoconnect is left intact, so even if LTE drops you can recover by power-cycling the Pi.
+
+To restore Wi-Fi without reboot:
+
+```
+sudo nmcli connection up preconfigured
+```
+
+> **Don't** use `nmcli connection modify preconfigured connection.autoconnect no` for this test. That setting persists across reboots and will leave you locked out if LTE signal drops while you're remote. If you've already done it, the recovery is to either wait for LTE to recover and SSH back in, or pull the SD card and edit `/etc/NetworkManager/system-connections/preconfigured.nmconnection` to set `autoconnect=true`.
+
 ## Routing priority
 
 The installer sets a NetworkManager profile on `usb0` with `ipv4.route-metric=800` — higher than `wlan0`'s default (600). This means **on the bench**, with both connected, Wi-Fi wins (faster, no carrier latency). **In flight**, with no Wi-Fi reachable, LTE is the only path so it wins by default.
