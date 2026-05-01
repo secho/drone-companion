@@ -50,7 +50,7 @@ if [ -f "$NETWORKD_DIR/10-usb0.network" ]; then
     mv "$NETWORKD_DIR/10-usb0.network" "$NETWORKD_DIR/10-usb0.network.gadget-bak"
 fi
 
-# NetworkManager profile for HiLink dongles on usb0 (DHCP, high metric)
+# NetworkManager profile for HiLink dongles on usb0 (DHCP, high metric, MTU 1428)
 NMCLI="${DRONE_NMCLI:-nmcli}"
 if command -v "$NMCLI" >/dev/null 2>&1; then
     # Drop any auto-generated NM profile literally named "usb0" (it picks up settings from the
@@ -58,10 +58,35 @@ if command -v "$NMCLI" >/dev/null 2>&1; then
     "$NMCLI" connection delete usb0 2>/dev/null || true
 
     if ! "$NMCLI" connection show drone-lte >/dev/null 2>&1; then
+        # MTU 1428 fits typical cellular path MTU after carrier encapsulation (avoids
+        # PMTU-discovery failures that black-hole packets on many mobile networks).
         "$NMCLI" connection add type ethernet ifname usb0 con-name drone-lte \
-            ipv4.method auto ipv4.route-metric 800 autoconnect yes 2>/dev/null || \
+            ipv4.method auto ipv4.route-metric 800 autoconnect yes \
+            802-3-ethernet.mtu 1428 2>/dev/null || \
             log_info "usb0 not present yet — NM profile deferred until dongle connected"
+    else
+        # Profile already exists — make sure MTU is set
+        "$NMCLI" connection modify drone-lte 802-3-ethernet.mtu 1428 2>/dev/null || true
     fi
+fi
+
+# CAKE queue discipline on usb0 — fixes cellular bufferbloat. Without this, a saturated
+# upstream queue on the LTE link causes 1-2 second latency spikes for ZeroTier and any
+# concurrent traffic. With it, latency stays under 200ms even under sustained download.
+DISPATCHER_DIR="${DRONE_NM_DISPATCHER_DIR:-/etc/NetworkManager/dispatcher.d}"
+if [ -d "$DISPATCHER_DIR" ]; then
+    cat > "$DISPATCHER_DIR/99-drone-lte-cake" <<'CAKE_EOF'
+#!/bin/sh
+# Installed by drone-companion (step 70-lte). Applies CAKE qdisc on the LTE
+# dongle interface every time it comes up. Fixes cellular bufferbloat.
+IF="$1"
+STATE="$2"
+if [ "$IF" = "usb0" ] && [ "$STATE" = "up" ]; then
+    /sbin/tc qdisc replace dev usb0 root cake 2>/dev/null || true
+fi
+CAKE_EOF
+    chmod 0755 "$DISPATCHER_DIR/99-drone-lte-cake"
+    log_info "Installed NM dispatcher: CAKE qdisc on usb0"
 fi
 
 mark_step_done "$STEP"
